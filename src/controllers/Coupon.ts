@@ -5,7 +5,9 @@ import ErrorHandler from "../utils/utilityclass";
 import { User } from "../models/user";
 import { IProduct, Product } from "../models/Product";
 import Stripe from "stripe";
+import dotenv from "dotenv";  // ✅ Import dotenv
 
+dotenv.config()
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("Missing STRIPE_SECRET_KEY in environment variables");
 }

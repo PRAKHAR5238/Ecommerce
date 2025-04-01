@@ -7,8 +7,9 @@ import { IProduct, Product } from "../models/Product";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2024-12-18.acacia" as any,
 });
+
 
 // Create Payment Intent
 export const createPaymentIntent = TryCatch(async (req: Request, res: Response, next: NextFunction) => {

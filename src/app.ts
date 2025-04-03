@@ -41,7 +41,7 @@ if (!stripeKey) {
 connectDB(mongouri);
 
 // ✅ Initialize Stripe
-const stripe = new Stripe(stripeKey, { apiVersion: "latest" as Stripe.LatestApiVersion });
+export const stripe = new Stripe(stripeKey, { apiVersion: "latest" as Stripe.LatestApiVersion });
 
 
 // ✅ Initialize cache

@@ -46,6 +46,10 @@ export const stripe = new Stripe(stripeKey, {
 });
 
 console.log("✅ Stripe initialized successfully!");
+console.log("Checking Environment Variables...");
+console.log("PORT:", process.env.PORT);
+console.log("Mongo_uri:", process.env.Mongo_uri ? "✅ Loaded" : "❌ Missing");
+console.log("STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY ? "✅ Loaded" : "❌ Missing");
 
 // ✅ Initialize cache
 export const myCache = new NodeCache();

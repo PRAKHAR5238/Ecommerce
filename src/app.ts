@@ -10,10 +10,15 @@ import NodeCache from "node-cache";
 import morgan from "morgan";
 import cors from "cors"
 import path from "path";
+import Stripe from "stripe";
 
 const app = express();
 const port = process.env.PORT || 4000;
+const stripeKey = process.env.STRIPE_SECRET_KEY|| "";
 const mongouri = process.env.Mongo_uri || "";
+
+export const stripe = new Stripe(stripeKey);
+
 
 // Ensure Mongo URI is provided
 if (!mongouri) {

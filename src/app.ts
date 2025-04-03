@@ -13,15 +13,15 @@ import path from "path";
 import Stripe from "stripe";
 import dotenv from "dotenv";
 
-// ✅ Load environment variables before using them
+// ✅ Load environment variables
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 4000;
 const stripeKey = (process.env.STRIPE_SECRET_KEY || "").trim();
-const mongouri = process.env.Mongo_uri || "";
+const mongouri = (process.env.Mongo_uri || "").trim();
 
-// ✅ Debug logs to check if env variables are loading
+// ✅ Debugging logs
 console.log("Stripe Key Loaded:", stripeKey ? "✅ Yes" : "❌ No");
 console.log("MongoDB URI:", mongouri ? "✅ Loaded" : "❌ Missing");
 
@@ -40,10 +40,13 @@ if (!stripeKey) {
 // ✅ Connect to the database
 connectDB(mongouri);
 
-// ✅ Initialize Stripe
+// ✅ Initialize Stripe with API Version
+export const stripe = new Stripe(stripeKey, {
+    apiVersion: "2025-02-24.acacia" as any,
+});
 
+console.log("✅ Stripe initialized successfully!");
 
-export const stripe = new Stripe(stripeKey);
 // ✅ Initialize cache
 export const myCache = new NodeCache();
 
@@ -58,7 +61,7 @@ app.get("/", (req, res) => {
 });
 
 // ✅ Serve static uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.resolve("uploads")));
 
 // ✅ Mount Routes
 app.use("/api/v1/user", userRoute);

@@ -1,0 +1,85 @@
+
+
+.orders-container {
+  @include grid(1fr, 2rem); 
+//   max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-top: 3%;
+  @include baseShadow(); // Apply shadow using baseShadow mixin
+}
+
+.orders-title {
+  @include heading(2px, 600); // Use heading mixin with custom weight
+  color: #333;
+  text-align: center;
+}
+
+.orders-list {
+  @include grid(1fr); 
+
+  @media (min-width: 600px) {
+    @include grid(1fr 1fr, 1rem); // Two columns on medium screens
+  }
+
+  @media (min-width: 900px) {
+    @include grid(1fr 1fr 1fr, 1.5rem); // Three columns on large screens
+  }
+}
+
+.order-item {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  @include baseShadow(); // Shadow effect
+  transition: transform 0.2s ease;
+  &:hover {
+    transform: translateY(-5px); // Hover lift effect
+  }
+}
+
+.order-top {
+  @include flex(row, space-between, center); // Flex row alignment for main order details
+  flex-wrap: wrap;
+}
+
+.order-detail {
+  @include flex(row, flex-start, center, 8px); // Flex for alignment and spacing of labels
+  font-size: 1rem;
+  color: #555;
+  flex: 1;
+
+  .label {
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+.status {
+  font-weight: 600;
+  &.delivered {
+    color: #4caf50;
+  }
+  &.processing {
+    color: #ff9800;
+  }
+  &.shipped {
+    color: #2196f3;
+  }
+  &.cancelled {
+    color: #f44336;
+  }
+}
+
+@media (max-width: 600px) {
+  .order-top {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .order-detail {
+    flex: 1 1 100%;
+  }
+}

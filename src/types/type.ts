@@ -29,43 +29,43 @@ export type ControllerType = (
   next: NextFunction
 ) => Promise<void | Response<any, Record<string, any>>>;
 
-export type searchRequestquerry={
-  search?:string,
-  category?:string,
-  price?:string,
-  sort?:string,
-  page?:string,
-}
+export type searchRequestquerry = {
+  search?: string;
+  category?: string;
+  price?: string;
+  sort?: string;
+  page?: string;
+};
 
-export type invalidatecacheprops={
-  product?:boolean;
-  order?:boolean;
-  admin?:boolean;
-}
+export type invalidatecacheprops = {
+  product?: boolean;
+  order?: boolean;
+  admin?: boolean;
+  review?: boolean;
+  productId?: string | string[];
+};
 
-export type Orderitemstype={
+export type Orderitemstype = {
   product_id: string;
   quantity: number;
-  price:Number,
-  photo:String
+  price: Number;
+  photo: String;
 };
-export interface Neworderequestbody{
-  shippingInfo:{},
-  user:String,
-  subtotal:Number,
-  tax:Number,
-  total:Number,
-  orderitems:Orderitemstype[],
-  shippingCharge:Number
-
-
+export interface Neworderequestbody {
+  shippingInfo: {};
+  user: String;
+  subtotal: Number;
+  tax: Number;
+  total: Number;
+  orderitems: Orderitemstype[];
+  shippingCharge: Number;
 }
-export type shippinginfotype={
-  address:String,
-  city:String,
-  state:String,
-  pincode:number,
-  country:String,
+export type shippinginfotype = {
+  address: String;
+  city: String;
+  state: String;
+  pincode: number;
+  country: String;
 };
 
 export interface ICoupon extends Document {
@@ -77,4 +77,3 @@ export interface ICoupon extends Document {
   applicableProducts: string[];
   applicableCategories: string[];
 }
-

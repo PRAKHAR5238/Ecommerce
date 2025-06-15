@@ -1,9 +1,10 @@
 import { TryCatch } from "../middleware/error";
 import { NextFunction, Response, Request } from "express";
-import { Coupon } from "../models/Coupon";
+import { Coupon, ICoupon } from "../models/Coupon";
 import ErrorHandler from "../utils/utilityclass";
 import { User } from "../models/user";
 import { stripe } from "../app.js";
+import { Document } from "mongoose";
 
 // Create Payment Intent
 export const createPaymentIntent = TryCatch(async (req: Request, res: Response, next: NextFunction) => {
@@ -36,27 +37,44 @@ export const createPaymentIntent = TryCatch(async (req: Request, res: Response, 
 
 // Create New Coupon
 export const newCoupon = TryCatch(async (req: Request, res: Response, next: NextFunction) => {
-  const { code, discountValue, discountType, expirationDate, usageLimit = 1, applicableProducts = [], applicableCategories = [] } = req.body;
-
-  if (!code || !discountValue || !discountType || !expirationDate) {
-    return next(new ErrorHandler("All required fields must be provided", 400));
-  }
-
-  const existingCoupon = await Coupon.findOne({ code });
-  if (existingCoupon) return next(new ErrorHandler("Coupon code already exists", 409));
-
-  const coupon = await Coupon.create({
+  const {
     code,
     discountValue,
     discountType,
     expirationDate,
-    usageLimit,
-    applicableProducts,
-    applicableCategories,
+    usageLimit = 1,
+    applicableProducts = [],
+    applicableCategories = [],
+  } = req.body;
+
+  // Validate required fields: code and discountValue (assuming code should be required too)
+  if (!code || discountValue === undefined || discountValue === null) {
+    return next(new ErrorHandler("Coupon code and discount value are required", 400));
+  }
+
+  // Optional: discountValue should be a positive number (or zero, if you allow)
+  if (typeof discountValue !== "number" || discountValue < 0) {
+    return next(new ErrorHandler("Discount value must be a non-negative number", 400));
+  }
+
+  // Check if coupon code already exists
+  const existingCoupon = await Coupon.findOne({ code });
+  if (existingCoupon) return next(new ErrorHandler("Coupon code already exists", 409));
+
+  // Create coupon with optional fields if provided
+  const coupon = await Coupon.create({
+    code,
+    discountValue,
+    discountType,         // optional
+    expirationDate,       // optional
+    usageLimit,           // defaults to 1 if not provided
+    applicableProducts,   // defaults to empty array
+    applicableCategories, // defaults to empty array
   });
 
   res.status(201).json({ success: true, message: "Coupon created successfully", coupon });
 });
+
 
 // Apply Discount Coupon
 export const applyDiscount = TryCatch(async (req: Request, res: Response, next: NextFunction) => {
@@ -93,4 +111,66 @@ export const deleteCoupon = TryCatch(async (req: Request, res: Response, next: N
   await coupon.deleteOne();
 
   res.status(200).json({ success: true, message: "Coupon deleted successfully" });
+});
+
+
+export const updateCoupon = TryCatch(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const { code, discountValue } = req.body;
+
+    // Validate if coupon ID is provided
+    if (!id) return next(new ErrorHandler("Coupon ID is required", 400));
+
+    // Find the coupon by its ID
+    const coupon = await Coupon.findById(id);
+
+    // Handle case where coupon is not found
+    if (!coupon) return next(new ErrorHandler("Coupon not found", 404));
+
+    let updated = false;
+
+    // Update code if it's provided and different from the current code
+    if (code && code !== coupon.code) {
+      coupon.code = code;
+      updated = true;
+    }
+
+    // Update amount if it's provided, is a valid number, and differs from the current amount
+    if (typeof discountValue === "number" && discountValue !== coupon.amount && discountValue > 0) {
+      coupon.discountValue = discountValue;
+      updated = true;
+    }
+
+    // If any update is made, save the coupon
+    if (updated) {
+      await coupon.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Coupon ${coupon.code} updated successfully`,
+    });
+  }
+);
+export const getCoupon = TryCatch(async (req: Request, res: Response, next: NextFunction) => {
+  const { code, id } = req.params;
+
+  if (!code && !id) {
+    return next(new ErrorHandler("Coupon code or ID is required", 400));
+  }
+ 
+ 
+  const coupon = code
+    ? await Coupon.findOne({ code })
+    : await Coupon.findById(id);
+
+  if (!coupon) {
+    return next(new ErrorHandler("Coupon not found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    coupon,
+  });
 });

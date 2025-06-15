@@ -12,7 +12,7 @@ import cors from "cors";
 import path from "path";
 import Stripe from "stripe";
 import dotenv from "dotenv";
-
+import {v2 as cloudniary} from 'cloudinary';
 // ✅ Load environment variables
 dotenv.config();
 
@@ -39,6 +39,13 @@ if (!stripeKey) {
 
 // ✅ Connect to the database
 connectDB(mongouri);
+console.log("Cloudinary config:", {
+    CLOUD_NAME: process.env.CLOUD_NAME,
+    API_KEY: process.env.API_KEY,
+    API_SECRET: process.env.API_SECRET ? "✅ Loaded" : "❌ Missing"
+  });
+  
+
 
 // ✅ Initialize Stripe with API Version
 export const stripe = new Stripe(stripeKey, {
@@ -55,7 +62,11 @@ console.log("STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY ? "✅ Loaded" :
 export const myCache = new NodeCache();
 
 // ✅ Middleware
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
+
 app.use(express.json());
 app.use(morgan("dev"));
 

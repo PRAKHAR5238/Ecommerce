@@ -6,6 +6,26 @@ import { config } from "dotenv";
 import { Order } from "../models/Order";
 import { UploadApiResponse, v2 as cloudinary } from "cloudinary";
 import fs from 'fs';
+import { Review } from "../models/Review";
+
+
+export const findAverageRatings = async (
+  productId: mongoose.Types.ObjectId
+) => {
+  let totalRating = 0;
+
+  const reviews = await Review.find({ product: productId });
+  reviews.forEach((review) => {
+    totalRating += review.rating;
+  });
+
+  const averateRating = Math.floor(totalRating / reviews.length) || 0;
+
+  return {
+    numOfReviews: reviews.length,
+    ratings: averateRating,
+  };
+};
 
 config({
   path: "./.env",
@@ -23,6 +43,8 @@ export const connectDB = (uri: string) => {
     .then((c) => console.log(`DB Connected to ${c.connections[0].name}`))
     .catch((e) => console.log(e));
 };
+
+
 
 const getBase64 = (file: Express.Multer.File) =>{
   // Read the file as a binary buffer
@@ -59,7 +81,13 @@ export const invalidatecacheproduct = async ({
   product,
   order,
   admin,
+  review,
+ 
 }: invalidatecacheprops) => {
+
+if (review && product) {
+  myCache.del([`reviews-${product.toString()}`]);
+}
 
   console.log(product);
   

@@ -5,13 +5,14 @@ import express, { Request, Response, NextFunction } from "express";
 
 export const adminOnly = TryCatch(async (req: Request, res: Response, next: NextFunction) => {
     const id = req.query.id || req.params.id as string;
-
+    
     if (!id) {
         return next(new ErrorHandler("ID is required", 400));
     }
 
     // Fetch user by ID (assuming `User` has a `findById` or equivalent method)
     const user = await User.findById(id);
+    
     if (!user) {
        
         
@@ -23,5 +24,6 @@ export const adminOnly = TryCatch(async (req: Request, res: Response, next: Next
         return next(new ErrorHandler("Access denied. Admins only.", 403));
     }
 
+    
     next(); // Pass control to the next middleware
 });

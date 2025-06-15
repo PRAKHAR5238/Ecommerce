@@ -2,10 +2,13 @@ import express from "express";
 import {
   adminproduct,
   allProductSearch,
+  allReviewsOfProduct,
   categoryproduct,
   DELETEPRODUCT,
+  deleteReview,
   latestProduct,
   NewProduct,
+  newReview,
   singleproduct,
   updateProduct,
 } from "../controllers/Product";
@@ -14,35 +17,33 @@ import { adminOnly } from "../middleware/auth";
 
 const app = express.Router();
 
-// Route to create a new product
-// This route is protected and requires admin access
-// Middleware `upload` handles file uploads (e.g., photos)
-app.post("/new", upload, adminOnly, NewProduct);
+// ✅ Create new product (with file upload)
+app.post("/new", upload.array("photos", 5), adminOnly, NewProduct);
 
-// Route to fetch the latest products
-// Returns the most recently added products
+// ✅ Latest products
 app.get("/latest", latestProduct);
 
-// Route to fetch all unique product categories
-// Useful for filtering products by category
+// ✅ Get all categories
 app.get("/category", categoryproduct);
 
-// Route to fetch all products (admin only)
-// Restricted to admin users for product management
+// ✅ Admin-only product listing
 app.get("/admin-product", adminOnly, adminproduct);
+
+// ✅ Product search
 app.get("/search", allProductSearch);
-// Routes for single product operations by ID
-// - GET: Fetch product details by ID
-// - PUT: Update product details (supports file uploads)
-// - DELETE: Remove product (admin only)
 
-
-
+// ✅ Single product CRUD
 app
   .route("/:id")
   .get(singleproduct)
-  .put(upload, updateProduct)
+  .put(upload.array("photos", 5), updateProduct) // ✅ Fixed here
   .delete(adminOnly, DELETEPRODUCT);
 
-// Export the router to be used in the main application
+
+  app.get("/allreview/:id" ,allReviewsOfProduct)
+  app.post("/review/new/:id" ,newReview)
+  
+    app.delete("/deleteReview/:id" ,deleteReview)
+
+
 export default app;

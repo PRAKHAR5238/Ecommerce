@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, HydratedDocument } from "mongoose";
 
-// Define an interface for the Photo document
+// 📸 Photo Interface
 interface IPhoto {
   url: string;
   altText?: string;
@@ -8,7 +8,16 @@ interface IPhoto {
   path: string;
 }
 
-// Define an interface for the Product document
+// ⭐ Review Interface
+interface IReview {
+  user: mongoose.Types.ObjectId;
+  name: string;
+  rating: number;
+  comment?: string;
+  createdAt?: Date;
+}
+
+// 🛒 Product Interface
 export interface IProduct extends Document {
   name: string;
   description?: string;
@@ -19,10 +28,13 @@ export interface IProduct extends Document {
   photos: IPhoto[];
   createdAt?: Date;
   updatedAt?: Date;
-  isInStock: boolean; // Virtual property
+  isInStock: boolean; // virtual
+  reviews: IReview[];
+  rating: number;
+  numOfReviews: number;
 }
 
-// Define the Photo schema
+// 📸 Photo Schema
 const PhotoSchema: Schema<IPhoto> = new Schema({
   url: {
     type: String,
@@ -43,7 +55,38 @@ const PhotoSchema: Schema<IPhoto> = new Schema({
   },
 });
 
-// Define the Product schema
+// ⭐ Review Schema
+const ReviewSchema: Schema<IReview> = new Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    rating: {
+      type: Number,
+      required: true,
+      min: [1, "Rating must be at least 1"],
+      max: [5, "Rating cannot exceed 5"],
+    },
+    comment: {
+      type: String,
+      trim: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
+// 📦 Product Schema
 const ProductSchema: Schema<IProduct> = new Schema(
   {
     name: {
@@ -79,6 +122,18 @@ const ProductSchema: Schema<IProduct> = new Schema(
       type: [PhotoSchema],
       default: [],
     },
+    reviews: {
+      type: [ReviewSchema],
+      default: [],
+    },
+    rating: {
+      type: Number,
+      default: 0,
+    },
+    numOfReviews: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -87,10 +142,10 @@ const ProductSchema: Schema<IProduct> = new Schema(
   }
 );
 
-// Virtual property for stock status
+// 📦 Virtual property
 ProductSchema.virtual("isInStock").get(function (this: HydratedDocument<IProduct>) {
   return this.stock > 0;
 });
 
-// Export the Mongoose Model
+// ✅ Export Model
 export const Product = mongoose.model<IProduct>("Product", ProductSchema);

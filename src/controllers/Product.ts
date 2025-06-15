@@ -4,7 +4,13 @@ import { Product } from "../models/Product.js";
 import { NewProductRequestBody } from "../types/type";
 import fs from "fs/promises";
 import { myCache } from "../app";
-import { invalidatecacheproduct, uploadToCloudinary } from "../utils/features";
+import { findAverageRatings, invalidatecacheproduct, uploadToCloudinary } from "../utils/features";
+import mongoose, { Types } from "mongoose";
+import ErrorHandler from "../utils/utilityclass";
+import { Review } from "../models/Review";
+import { User } from "../models/user";
+
+
 
 export const NewProduct = TryCatch(
   async (
@@ -15,10 +21,13 @@ export const NewProduct = TryCatch(
     const { name, description, price, stock, category, isActive } = req.body;
     const files = req.files as Express.Multer.File[] | undefined;
 
+    console.log("Request body:", req.body);
+    console.log("Files received:", files?.map(f => f.originalname));
+
     if (!name || !price || !stock || !category || !files || files.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: name, price, stock, category, or photo.",
+        message: "Missing required fields: name, price, stock, category, or photos.",
       });
     }
 
@@ -29,20 +38,35 @@ export const NewProduct = TryCatch(
       });
     }
 
-    // Upload photos to Cloudinary
     const photosURL = await uploadToCloudinary(files);
-    console.log(photosURL);
-    
+    if (!Array.isArray(photosURL) || photosURL.length === 0) {
+      return res.status(500).json({
+        success: false,
+        message: "Photo upload failed",
+      });
+    }
 
-    const newProduct = await Product.create({
-      name,
-      price,
-      description,
-      stock,
-      category: category.toLowerCase(),
-      isActive: isActive ?? true,
-      photos: photosURL,
-    });
+    let newProduct;
+    try {
+      newProduct = await Product.create({
+        name,
+        price,
+        description,
+        stock,
+        category: category.toLowerCase(),
+        isActive: isActive ?? true,
+        photos: photosURL,
+        reviews: [],
+        rating: 0,
+        numOfReviews: 0,
+      });
+    } catch (error) {
+      console.error("Product creation failed:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error creating product",
+      });
+    }
 
     await invalidatecacheproduct({ product: true, admin: true });
 
@@ -53,6 +77,7 @@ export const NewProduct = TryCatch(
     });
   }
 );
+
 
 export const latestProduct = TryCatch(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -113,6 +138,14 @@ export const singleproduct = TryCatch(
   async (req: Request, res: Response, next: NextFunction) => {
     const productId = req.params.id;
 
+    // 🔐 Prevent invalid ObjectId errors
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID.",
+      });
+    }
+
     const product = await Product.findById(productId);
 
     if (!product) {
@@ -128,6 +161,7 @@ export const singleproduct = TryCatch(
     });
   }
 );
+
 
 export const updateProduct = TryCatch(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -231,6 +265,113 @@ export const allProductSearch = TryCatch(
       products,
       totalPages,
       totalCount,
+    });
+  }
+);
+
+
+
+
+
+export const deleteReview = TryCatch(async (req: { query: { id: any; }; params: { id: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { success: boolean; message: string; }): any; new(): any; }; }; }, next: (arg0: ErrorHandler) => any) => {
+  const user = await User.findById(req.query.id);
+
+  if (!user) return next(new ErrorHandler("Not Logged In", 404));
+
+  const review = await Review.findById(req.params.id);
+  if (!review) return next(new ErrorHandler("Review Not Found", 404));
+
+  const isAuthenticUser = review.user.toString() === user._id.toString();
+
+  if (!isAuthenticUser) return next(new ErrorHandler("Not Authorized", 401));
+
+  await review.deleteOne();
+
+  const product = await Product.findById(review.product);
+
+  if (!product) return next(new ErrorHandler("Product Not Found", 404));
+
+  const { ratings, numOfReviews } = await findAverageRatings(product._id as Types.ObjectId);
+
+  product.rating = ratings;
+  product.numOfReviews = numOfReviews;
+
+  await product.save();
+
+  await invalidatecacheproduct({
+    product: true,
+    productId: String(product._id),
+    admin: true,
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Review Deleted",
+  });
+});
+
+
+export const newReview = TryCatch(async (req: { query: { id: any; }; params: { id: any; }; body: { comment: any; rating: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { success: boolean; message: string; }): any; new(): any; }; }; }, next: (arg0: ErrorHandler) => any) => {
+  const user = await User.findById(req.query.id);
+
+  if (!user) return next(new ErrorHandler("Not Logged In", 404));
+
+  const product = await Product.findById(req.params.id);
+  if (!product) return next(new ErrorHandler("Product Not Found", 404));
+
+  const { comment, rating } = req.body;
+
+  const alreadyReviewed = await Review.findOne({
+    user: user._id,
+    product: product._id,
+  });
+
+  if (alreadyReviewed) {
+    alreadyReviewed.comment = comment;
+    alreadyReviewed.rating = rating;
+
+    await alreadyReviewed.save();
+  } else {
+    await Review.create({
+      comment,
+      rating,
+      user: user._id,
+      product: product._id,
+    });
+  }
+
+ const { ratings, numOfReviews } = await findAverageRatings(product._id as Types.ObjectId);
+
+  product.rating = ratings;
+  product.numOfReviews = numOfReviews;
+
+  await product.save();
+
+  await invalidatecacheproduct({
+    product: true,
+    productId: String(product._id),
+    admin: true,
+    review: true,
+  });
+
+  return res.status(alreadyReviewed ? 200 : 201).json({
+    success: true,
+    message: alreadyReviewed ? "Review Update" : "Review Added",
+  });
+});
+
+
+export const allReviewsOfProduct = TryCatch(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const productId = req.params.id;
+
+    const reviews = await Review.find({ product: productId })
+      .populate("user", "name photo")
+      .sort({ updatedAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      reviews,
     });
   }
 );

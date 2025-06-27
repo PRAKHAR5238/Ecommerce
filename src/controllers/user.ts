@@ -99,3 +99,35 @@ export const deleteUser = TryCatch(
     });
   }
 );
+
+
+
+
+
+export const updateUserRole = TryCatch(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    console.log("REQ BODY:", req.body); // ✅ Debug
+    console.log("Role:", role); // ✅ Debug
+
+    if (!role || !["admin", "user"].includes(role)) {
+      return next(new ErrorHandler("Invalid role. Must be 'admin' or 'user'.", 400));
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return next(new ErrorHandler("User not found.", 404));
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `User role updated to ${role} successfully.`,
+      user,
+    });
+  }
+);

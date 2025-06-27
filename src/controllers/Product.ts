@@ -248,7 +248,7 @@ export const allProductSearch = TryCatch(
     const query: any = {};
     if (search) query.name = { $regex: search, $options: "i" };
     if (price) query.price = { $lte: Number(price) };
-    if (category) query.category = category;
+    if (category) query.category = { $regex: new RegExp(`^${category}$`, "i") };
 
     const [products, totalCount] = await Promise.all([
       Product.find(query)
@@ -268,6 +268,7 @@ export const allProductSearch = TryCatch(
     });
   }
 );
+
 
 
 

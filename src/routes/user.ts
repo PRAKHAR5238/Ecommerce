@@ -4,20 +4,23 @@ import {
   newUser,
   getUser,
   deleteUser,
+  updateUserRole,
 } from "../controllers/user.js";
 import { adminOnly } from "../middleware/auth.js";
+import { upload } from "../middleware/mutler.js";
 
-const app = express.Router();
+const app = express.Router(); // ✅ This is the router you are exporting
 
-// Create a new user
+// ✅ Register your route here (NOT on another router)
+app.put("/:id/role", updateUserRole); // ✅ Keep it clean
+
+
+// Other routes
 app.post("/new", newUser);
-
-// Get all users (only accessible by admin)
 app.get("/all", adminOnly, getAllUsers);
 
-// Get a specific user and delete a user by ID (only accessible by admin for delete)
 app.route("/:id")
-  .get(getUser)  // Retrieve a specific user
-  .delete(adminOnly, deleteUser);  // Only an admin can delete
+  .get(getUser)
+  .delete(adminOnly, deleteUser); // Only admin can delete
 
 export default app;

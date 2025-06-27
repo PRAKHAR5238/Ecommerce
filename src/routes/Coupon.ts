@@ -11,7 +11,7 @@ import {
 } from "../controllers/Coupon";
 
 const app = express.Router();
-app.post("/create", adminOnly, createPaymentIntent);
+app.post("/create", createPaymentIntent);
 // Route to create a new coupon (admin only)
 app.post("/newcoupon", adminOnly, newCoupon);
 

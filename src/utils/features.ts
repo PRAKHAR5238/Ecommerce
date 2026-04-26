@@ -31,9 +31,9 @@ config({
   path: "./.env",
 });
 cloudinary.config({
-  cloud_name: 'dzf5jbmrx', // Replace with your Cloudinary cloud name
-  api_key: '151218136631922',       // Replace with your API key
-  api_secret: 'Kym7DvrkXWn93QMS1v2a5JrVfnc', // Replace with your API secret
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
 });
 export const connectDB = (uri: string) => {
   mongoose

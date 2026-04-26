@@ -17,7 +17,7 @@ import {v2 as cloudniary} from 'cloudinary';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 4006;
 const stripeKey = (process.env.STRIPE_SECRET_KEY || "").trim();
 const mongouri = (process.env.Mongo_uri || "").trim();
 

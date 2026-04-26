@@ -17,7 +17,7 @@ import {v2 as cloudniary} from 'cloudinary';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 4006;
+const port = Number(process.env.PORT) || 4000;
 const stripeKey = (process.env.STRIPE_SECRET_KEY || "").trim();
 const mongouri = (process.env.Mongo_uri || "").trim();
 
@@ -88,7 +88,7 @@ app.use("/api/v1/Stats", statsroute);
 // ✅ Error handling middleware (must be last)
 app.use(errormiddleware);
 
-// ✅ Start the server
-app.listen(port, () => {
-    console.log(`🚀 Server running on http://localhost:${port}`);
+// ✅ Start the server (0.0.0.0 required for Render and other PaaS port detection)
+app.listen(port, "0.0.0.0", () => {
+    console.log(`🚀 Server listening on 0.0.0.0:${port}`);
 });
